@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juego de Sigilo</title>
+    <title>Juego de Sigilo con Cámara Trasera</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             background-color: black;
             position: relative;
-            height: 100vh;
         }
         /* Estilo de la cámara */
         #video {
@@ -20,19 +19,20 @@
             object-fit: cover;
             z-index: -1;
         }
-        /* Pistola y puntero */
+        /* Pistola */
         #pistola {
             position: absolute;
             width: 60px;
             height: 60px;
             background-color: red;
-            border-radius: 50%;
+            border-radius: 5px;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             cursor: pointer;
             z-index: 1;
         }
+        /* Puntero */
         #puntero {
             position: absolute;
             width: 10px;
@@ -54,15 +54,17 @@
     <div id="puntero"></div>
 
     <script>
-        // Función para acceder a la cámara
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                const videoElement = document.getElementById('video');
-                videoElement.srcObject = stream;
-            })
-            .catch(error => {
-                console.error("Error al acceder a la cámara: ", error);
-            });
+        // Solicitar acceso a la cámara trasera
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" }  // Accede a la cámara trasera
+        })
+        .then(stream => {
+            const videoElement = document.getElementById('video');
+            videoElement.srcObject = stream; // Asigna el flujo de video de la cámara trasera al elemento de video
+        })
+        .catch(error => {
+            console.error("Error al acceder a la cámara:", error);
+        });
 
         // Variables de pistola y puntero
         const pistola = document.getElementById('pistola');
@@ -70,23 +72,21 @@
         let pistolaPosX = window.innerWidth / 2;  // Posición inicial
         let pistolaPosY = window.innerHeight - 80; // En la parte inferior de la pantalla
 
-        // Movimiento del puntero
+        // Movimiento del puntero con el mouse
         document.addEventListener('mousemove', (event) => {
             puntero.style.left = event.pageX - 5 + 'px';
             puntero.style.top = event.pageY - 5 + 'px';
         });
 
-        // Movimiento de la pistola
+        // Movimiento de la pistola al hacer clic
         pistola.addEventListener('mousedown', () => {
-            // Aquí podrías agregar la acción de disparar al presionar
             console.log("¡Disparo!");
-
-            // Verificar si el puntero toca a un "ladrón" (más adelante se añadirá la mecánica)
-            // Aquí se simula con un log para depurar
+            // Aquí se podría agregar la lógica de disparo hacia el puntero
+            // Se puede simular que se dispara si el puntero está dentro del área de un "ladrón"
             console.log("Disparando al puntero:", puntero.style.left, puntero.style.top);
         });
 
-        // Función para detectar movimiento y alertar si el jugador se mueve demasiado rápido
+        // Detección de movimiento con el acelerómetro (para evitar que el jugador se mueva demasiado rápido)
         window.addEventListener('deviceorientation', (event) => {
             let inclinacion = event.gamma; // Movimiento lateral
             if (Math.abs(inclinacion) > 10) { // Si se mueve rápidamente
@@ -94,13 +94,44 @@
             }
         });
 
-        // Función de proximidad (simulación)
+        // Detección de proximidad (si el jugador acerca demasiado el móvil)
         window.addEventListener('devicemotion', (event) => {
             const aceleracion = event.accelerationIncludingGravity;
             if (aceleracion.x > 15 || aceleracion.y > 15) { // Si hay movimiento brusco
                 alert('¡Te moviste demasiado rápido!');
             }
         });
+
+        // Detección de sonido con el micrófono (si el jugador hace mucho ruido, el juego detecta que fue escuchado)
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                const mediaStream = stream;
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                source.connect(analyser);
+                analyser.fftSize = 256;
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                function detectarRuido() {
+                    analyser.getByteFrequencyData(dataArray);
+                    let total = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        total += dataArray[i];
+                    }
+                    let average = total / bufferLength;
+                    if (average > 100) { // Si el sonido es alto, se activa
+                        alert('¡Te escucharon!');
+                    }
+                    requestAnimationFrame(detectarRuido);
+                }
+
+                detectarRuido();
+            })
+            .catch(error => {
+                console.error("Error al acceder al micrófono:", error);
+            });
 
     </script>
 </body>
