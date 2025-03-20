@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Sigilo</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+            position: relative;
+            height: 100vh;
+        }
+        /* Estilo de la cámara */
+        #video {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+        /* Pistola y puntero */
+        #pistola {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: red;
+            border-radius: 50%;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+            z-index: 1;
+        }
+        #puntero {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: yellow;
+            border-radius: 50%;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+    <!-- Video de fondo (cámara) -->
+    <video id="video" autoplay></video>
+
+    <!-- Pistola en pantalla -->
+    <div id="pistola"></div>
+
+    <!-- Puntero -->
+    <div id="puntero"></div>
+
+    <script>
+        // Función para acceder a la cámara
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                const videoElement = document.getElementById('video');
+                videoElement.srcObject = stream;
+            })
+            .catch(error => {
+                console.error("Error al acceder a la cámara: ", error);
+            });
+
+        // Variables de pistola y puntero
+        const pistola = document.getElementById('pistola');
+        const puntero = document.getElementById('puntero');
+        let pistolaPosX = window.innerWidth / 2;  // Posición inicial
+        let pistolaPosY = window.innerHeight - 80; // En la parte inferior de la pantalla
+
+        // Movimiento del puntero
+        document.addEventListener('mousemove', (event) => {
+            puntero.style.left = event.pageX - 5 + 'px';
+            puntero.style.top = event.pageY - 5 + 'px';
+        });
+
+        // Movimiento de la pistola
+        pistola.addEventListener('mousedown', () => {
+            // Aquí podrías agregar la acción de disparar al presionar
+            console.log("¡Disparo!");
+
+            // Verificar si el puntero toca a un "ladrón" (más adelante se añadirá la mecánica)
+            // Aquí se simula con un log para depurar
+            console.log("Disparando al puntero:", puntero.style.left, puntero.style.top);
+        });
+
+        // Función para detectar movimiento y alertar si el jugador se mueve demasiado rápido
+        window.addEventListener('deviceorientation', (event) => {
+            let inclinacion = event.gamma; // Movimiento lateral
+            if (Math.abs(inclinacion) > 10) { // Si se mueve rápidamente
+                alert('¡Te moviste demasiado rápido, cuidado!');
+            }
+        });
+
+        // Función de proximidad (simulación)
+        window.addEventListener('devicemotion', (event) => {
+            const aceleracion = event.accelerationIncludingGravity;
+            if (aceleracion.x > 15 || aceleracion.y > 15) { // Si hay movimiento brusco
+                alert('¡Te moviste demasiado rápido!');
+            }
+        });
+
+    </script>
+</body>
+</html>
